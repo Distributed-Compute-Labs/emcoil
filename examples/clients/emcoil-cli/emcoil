@@ -1,0 +1,139 @@
+#! /usr/bin/env node
+
+console.log('EMCoil CLI - Launch EMCoil jobs from the commandline\
+Copyright (c) 2020 Kings Distributed Systems Ltd., All Rights Reserved.');
+
+const options = require('yargs')
+  .option('scheduler', {
+    alias: 's',
+    default: undefined,
+    description: 'Scheduler to deploy job to',
+  })
+  .option('keystore', {
+    alias: 'k',
+    default: undefined,
+    description: 'Payment keystore',
+  })
+  .option('price', {
+    alias: 'p',
+    default: 0.000146537600000000,
+    type: 'number',
+    description: 'Per-slice payment offer'
+  })
+  .option('linger', {
+    alias: 'l',
+    default: false,
+    type: 'boolean',
+    description: 'If set, keep the application open after deploying'
+  })
+  // .option('factor', {
+  //   alias: 'f',
+  //   default: 1,
+  //   description: 'Work multiplier'
+  // })
+  .argv;
+
+const factor = options.factor || 1;
+
+require('dcp-client').init(options.scheduler)
+.then(() => {
+  console.log('Loaded client; deploying to', require('dcp/dcp-config').scheduler.location.toString());
+  
+  compute = require('dcp/compute');
+  MultiRangeObject = require('dcp/rangeobject').MultiRangeObject;
+  
+  return require('dcp/wallet').get(options.keystore || undefined);
+})
+.then(keystore => {
+  
+  console.log('Payment account: ' + keystore.address);
+  
+  args = [ 1, 0.000004, 50 * factor ];
+  d = [
+    [ 0, 500 ],   // Coil AC Frequency
+    { start: 0, end: 100, step: 0.0002 }, // Coil velocity
+    1,            // Coil current
+    9460000,      // Coil turn density
+    0.01,         // Coil thickness
+    0.01,         // Coil length
+    0.01,         // Coil-Tube air gap
+    0.05,         // Tube outer radius
+    0.01,         // Layer 1 thickness
+    59000000,     // Layer 1 conductivity
+    1,            // Layer 1 permeability
+    0.01,         // Layer 2 thickness
+    32000000,     // Layer 2 conductivity
+    1             // Layer 2 permeability
+  ];
+  mro = new MultiRangeObject(d);
+  
+  const workerPath = require('path').dirname(__filename);
+  workfn = require('fs').readFileSync(require('path').join(workerPath, 'worker.js'),'utf8');
+
+  job = compute.for(mro, workfn, args);
+  
+  job.public.name = ('Electrodynamics@home');
+  
+  job.on('accepted', () => {
+    console.log('Job has been accepted', job.id);
+
+    if (!options.linger) {
+      console.log('Deploy is complete');
+      require('process').exit(0);
+    }
+    
+    console.log('Job is running. To exit application:');
+    console.log('  ^C (SIGINT)  Exit application, leave job running');
+    console.log('  ^\\ (SIGQUIT) Terminate job, then exit application');
+  
+    job.debug = true;
+    job.work.debug = true;
+    
+    job.on('complete', ev => {
+      console.log('Complete; exiting application');
+      require('process').exit(0);
+    })
+  
+    setInterval(() => {
+      console.log('**', (new Date()).toLocaleTimeString('en-CA', { hour12:false }), job.status);
+    },  10000 );
+  });
+  job.on('result', ev => { console.log('Result', ev.sliceNumber, typeof ev, Object.keys(ev)); lastResult = ev; });
+  // job.on('result', ev => console.log('Result', ev.sliceNumber, job.tasks));
+  // job.on('duplicate-result', ev => console.log('Dupe', ev.sliceNumber, ev.changed ? 'changed' : 'same'));
+  job.on('status', ev => console.log('Status:', ev));
+  job.on('complete', ev => console.log('Complete'));
+  job.on('cancel', ev => console.log('Generator cancelled'));
+  job.on('readystatechange', rs => console.log('Readystate ->', rs, `(is now ${job.readyState})`));
+  
+  job.work.on('console', ev => console.log('078: worker event:', ev));
+
+  maxPerRequest = options.price / factor;
+  
+  console.log('Job is ready on global variable job.');
+
+  job.timing = 240000;	// default timing, 4 min
+  job.exec({ maxPerRequest }, keystore).catch(err => {
+    switch(err.code) {
+      case 'ENOFUNDS':
+        console.error('Exec failed: Not enough funds');
+        console.error('The payment account does not have enough funds to deploy');
+      default:
+        console.error("Exec failed", err.message);
+    };
+    
+    require('process').exit(1);
+  });
+
+  require('process').on('SIGQUIT', ev => {
+    console.log('* Received SIGQUIT; killing job');
+    job.cancel()
+    .then(ev => {
+      console.log('   - OK, job is dead.');
+      require('process').exit(0);
+    });
+  });
+  
+  return job;
+});
+
