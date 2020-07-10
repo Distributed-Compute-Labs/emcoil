@@ -40,7 +40,7 @@ require('dcp-client').init(options.scheduler)
   console.log('Loaded client; deploying to', require('dcp/dcp-config').scheduler.location.toString());
   
   compute = require('dcp/compute');
-  MultiRangeObject = require('dcp/rangeobject').MultiRangeObject;
+  MultiRangeObject = require('dcp/range-object').MultiRangeObject;
   
   return require('dcp/wallet').get(options.keystore || undefined);
 })
