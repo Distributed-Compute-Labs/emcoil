@@ -51,7 +51,7 @@ require('dcp-client').init(options.scheduler)
   args = [ 1, 0.000004, 50 * factor ];
   d = [
     [ 0, 500 ],   // Coil AC Frequency
-    { start: 0, end: 100, step: 0.0002 }, // Coil velocity
+    { start: 0, end: 100, step: 0.02 }, // Coil velocity
     1,            // Coil current
     9460000,      // Coil turn density
     0.01,         // Coil thickness
@@ -65,7 +65,7 @@ require('dcp-client').init(options.scheduler)
     32000000,     // Layer 2 conductivity
     1             // Layer 2 permeability
   ];
-  mro = new MultiRangeObject(d);
+  mro = Array.from(new MultiRangeObject(d));
   
   const workerPath = require('path').dirname(__filename);
   workfn = require('fs').readFileSync(require('path').join(workerPath, 'worker.js'),'utf8');
@@ -78,7 +78,7 @@ require('dcp-client').init(options.scheduler)
     console.log('Job has been accepted', job.id);
 
     if (!options.linger) {
-      console.log('Deploy is complete');
+      console.log('Deploy is complete; exiting');
       require('process').exit(0);
     }
     
@@ -91,7 +91,7 @@ require('dcp-client').init(options.scheduler)
     
     job.on('complete', ev => {
       console.log('Complete; exiting application');
-      require('process').exit(0);
+      // require('process').exit(0);
     })
   
     setInterval(() => {
@@ -99,6 +99,7 @@ require('dcp-client').init(options.scheduler)
     },  10000 );
   });
   job.on('result', ev => { console.log('Result', ev.sliceNumber, typeof ev, Object.keys(ev)); lastResult = ev; });
+  job.on('resultsUpdated', ev => { console.log('Result Available', ev.sliceNumber, typeof ev, Object.keys(ev)); lastResult = ev; });
   // job.on('result', ev => console.log('Result', ev.sliceNumber, job.tasks));
   // job.on('duplicate-result', ev => console.log('Dupe', ev.sliceNumber, ev.changed ? 'changed' : 'same'));
   job.on('status', ev => console.log('Status:', ev));
