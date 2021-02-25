@@ -11,5 +11,8 @@
     "emcoil"
   ],
   "author": "Dan Desjardins, PhD",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "dcp-client": "file:../dcp-client"
+  }
 }
