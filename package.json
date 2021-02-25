@@ -1,0 +1,15 @@
+{
+  "name": "emcoil",
+  "version": "2.0.0",
+  "description": "Computational Electromagnetics Simulation",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "dcp",
+    "emcoil"
+  ],
+  "author": "Dan Desjardins, PhD",
+  "license": "MIT"
+}
