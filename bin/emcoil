@@ -68,12 +68,21 @@ require('dcp-client').init(options.scheduler)
   mro = Array.from(new MultiRangeObject(d));
   
   const workerPath = require('path').dirname(__filename);
-  workfn = require('fs').readFileSync(require('path').join(workerPath, 'worker.js'),'utf8');
+  workfn = require('fs').readFileSync(require('path').join(workerPath, '../lib/emcoil-math.js'),'utf8');
 
   job = compute.for(mro, workfn, args);
   
   job.public.name = ('Electrodynamics@home');
-  
+  job.on('console', function consoleHandler() {
+    console.log('Console log:', Array.from(arguments));
+  });
+  job.on('error', function errorHandler() {
+    console.log('Error:', Array.from(arguments));
+  });
+  job.on('result',  function resultHandler() {
+    console.log('Result:', Array.from(arguments));
+  });
+
   job.on('accepted', () => {
     console.log('Job has been accepted', job.id);
 
@@ -113,7 +122,7 @@ require('dcp-client').init(options.scheduler)
   
   console.log('Job is ready on global variable job.');
 
-  job.timing = 240000;	// default timing, 4 min
+  job.timing = 240000;  // default timing, 4 min
   job.exec({ maxPerRequest }, keystore).catch(err => {
     switch(err.code) {
       case 'ENOFUNDS':
