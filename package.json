@@ -13,6 +13,9 @@
   "author": "Dan Desjardins, PhD",
   "license": "MIT",
   "dependencies": {
-    "dcp-client": "file:../dcp-client"
+    "dcp-client": "file:../dcp-client",
+    "dcp-math": "git+ssh://git@gitlab.com/Distributed-Compute-Protocol/dcp-math.git",
+    "sparc-math": "git+ssh://git@gitlab.com/Distributed-Compute-Protocol/dcp-math.git",
+    "yargs": "^16.2.0"
   }
 }

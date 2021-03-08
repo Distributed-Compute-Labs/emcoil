@@ -22,7 +22,7 @@ const options = require('yargs')
   })
   .option('linger', {
     alias: 'l',
-    default: false,
+    default: true,
     type: 'boolean',
     description: 'If set, keep the application open after deploying'
   })
@@ -65,12 +65,13 @@ require('dcp-client').init(options.scheduler)
     32000000,     // Layer 2 conductivity
     1             // Layer 2 permeability
   ];
-  mro = Array.from(new MultiRangeObject(d));
+  mro = new MultiRangeObject(d);
   
   const workerPath = require('path').dirname(__filename);
-  workfn = require('fs').readFileSync(require('path').join(workerPath, '../lib/emcoil-math.js'),'utf8');
+  workfn = require('fs').readFileSync(require('path').join(workerPath, '../lib/demo.js'),'utf8');
 
   job = compute.for(mro, workfn, args);
+  job.requires('dcp-math');
   
   job.public.name = ('Electrodynamics@home');
   job.on('console', function consoleHandler() {
@@ -103,12 +104,12 @@ require('dcp-client').init(options.scheduler)
       // require('process').exit(0);
     })
   
-    setInterval(() => {
-      console.log('**', (new Date()).toLocaleTimeString('en-CA', { hour12:false }), job.status);
-    },  10000 );
+    // setInterval(() => {
+    //   console.log('**', (new Date()).toLocaleTimeString('en-CA', { hour12:false }), job.status);
+    // },  10000 );
   });
-  job.on('result', ev => { console.log('Result', ev.sliceNumber, typeof ev, Object.keys(ev)); lastResult = ev; });
-  job.on('resultsUpdated', ev => { console.log('Result Available', ev.sliceNumber, typeof ev, Object.keys(ev)); lastResult = ev; });
+  // job.on('result', ev => { console.log('Result', ev && ev.sliceNumber, typeof ev, Object.keys(ev)); lastResult = ev; });
+  job.on('resultsUpdated', ev => { console.log('Result Available', ev); lastResult = ev; });
   // job.on('result', ev => console.log('Result', ev.sliceNumber, job.tasks));
   // job.on('duplicate-result', ev => console.log('Dupe', ev.sliceNumber, ev.changed ? 'changed' : 'same'));
   job.on('status', ev => console.log('Status:', ev));
@@ -116,7 +117,7 @@ require('dcp-client').init(options.scheduler)
   job.on('cancel', ev => console.log('Generator cancelled'));
   job.on('readystatechange', rs => console.log('Readystate ->', rs, `(is now ${job.readyState})`));
   
-  job.work.on('console', ev => console.log('078: worker event:', ev));
+  job.work.on('console', ev => console.log('078: worker console:', ev));
 
   maxPerRequest = options.price / factor;
   
