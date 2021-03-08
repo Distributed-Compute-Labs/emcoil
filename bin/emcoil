@@ -68,7 +68,7 @@ require('dcp-client').init(options.scheduler)
   mro = new MultiRangeObject(d);
   
   const workerPath = require('path').dirname(__filename);
-  workfn = require('fs').readFileSync(require('path').join(workerPath, '../lib/demo.js'),'utf8');
+  workfn = require('fs').readFileSync(require('path').join(workerPath, '../lib/emcoil-worker.js'),'utf8');
 
   job = compute.for(mro, workfn, args);
   job.requires('dcp-math');
