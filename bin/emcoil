@@ -71,9 +71,16 @@ require('dcp-client').init(options.scheduler)
   workfn = require('fs').readFileSync(require('path').join(workerPath, '../lib/emcoil-worker.js'),'utf8');
 
   job = compute.for(mro, workfn, args);
-  job.requires('dcp-math');
+
+  // API change between v3 and v4; this allows the same frontend to work for both
+  if (typeof job.dependencies === 'function')
+    job.dependencies('dcp-math');
+  else
+    job.requires('dcp-math');
   
-  job.public.name = ('Electrodynamics@home');
+  job.public.name = (`Electrodynamics@home ${Date().split(' ')[4]}`);
+  job.public.description = `Deployed ${Date()}`;
+
   job.on('console', function consoleHandler() {
     console.log('Console log:', Array.from(arguments));
   });
