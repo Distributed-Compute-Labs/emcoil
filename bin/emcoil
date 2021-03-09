@@ -75,7 +75,7 @@ require('dcp-client').init(options.scheduler)
   // API change between v3 and v4; this allows the same frontend to work for both
   job.requires('dcp-math');
   
-  job.public.name = (`Electrodynamics@home ${Date().split(' ')[4].slice(0,4)}`);
+  job.public.name = (`Electrodynamics@home ${Date().split(' ')[4].slice(0,5)}`);
   job.public.description = `Deployed ${Date()}`;
 
   job.on('console', function consoleHandler() {
