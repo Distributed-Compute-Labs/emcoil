@@ -134,7 +134,7 @@ require('dcp-client').init(options.scheduler)
         console.error('Exec failed: Not enough funds');
         console.error('The payment account does not have enough funds to deploy');
       default:
-        console.error("Exec failed", err.message);
+        console.error("Exec failed", err);
     };
     
     require('process').exit(1);
